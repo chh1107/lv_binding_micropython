@@ -25,7 +25,7 @@ static bool config_dma2d(void);
 #include "stm32f429i_discovery_lcd.h"
 
 
-STATIC mp_obj_t mp_rk043fn48h_framebuffer(mp_obj_t n_obj) {
+STATIC mp_obj_t framebuffer(mp_obj_t n_obj) {
 	int n = mp_obj_get_int(n_obj) -1;
 
 	if (n<0 || n>1){
@@ -34,7 +34,7 @@ STATIC mp_obj_t mp_rk043fn48h_framebuffer(mp_obj_t n_obj) {
 
 	if(fb[n]==NULL){
 		// allocation on extRAM with 1KB alignment to speed up LTDC burst access on AHB
-		fb[n] = MP_STATE_PORT(rk043fn48h_fb[n]) = m_malloc(sizeof(lv_color_t) * w * h  + 1024);
+		fb[n] = MP_STATE_PORT(f429_disco_fb[n]) = m_malloc(sizeof(lv_color_t) * w * h  + 1024);
 		fb[n] = (lv_color_t*)((uint32_t)fb[n] + 1024 - (uint32_t)fb[n] % 1024);
 	}
 	return mp_obj_new_bytearray_by_ref(sizeof(lv_color_t) * w * h , (void *)fb[n]);
@@ -54,12 +54,10 @@ STATIC mp_obj_t _init(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args
     mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
     mp_arg_parse_all(n_args, pos_args, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
 
-   
-
     w = args[ARG_w].u_int;
     h = args[ARG_h].u_int;
 
-    mp_rk043fn48h_framebuffer(mp_obj_new_int(1));
+    framebuffer(mp_obj_new_int(1));
 
     if (fb[0] == NULL) {
         mp_obj_new_exception_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("Failed allocating frame buffer"));
@@ -86,29 +84,20 @@ STATIC mp_obj_t _init(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args
 
 //extern void SCB_CleanInvalidateDCache();
 
-STATIC void mp_rk043fn48h_flush(lv_disp_drv_t *disp_drv, const lv_area_t *area, lv_color_t *color_p) {
-    if ((lv_area_get_width(area) == w) && (lv_area_get_height(area) == h)) {
-        dma2d_disp_drv = disp_drv;
-        //SCB_CleanInvalidateDCache();
-        HAL_LTDC_SetAddress_NoReload(&hltdc, (uint32_t)color_p, 1);
-        HAL_LTDC_Reload(&hltdc, LTDC_RELOAD_VERTICAL_BLANKING);
-    } else {
+STATIC void flush_cb(lv_disp_drv_t *disp_drv, const lv_area_t *area, lv_color_t *color_p) {
+   
         hdma2d->Init.Mode = DMA2D_M2M;
         hdma2d->Init.OutputOffset = w - lv_area_get_width(area);
         dma2d_disp_drv = disp_drv;
         dma2d_pend = true;
         //SCB_CleanInvalidateDCache();
         HAL_DMA2D_Init(hdma2d);
-        if (HAL_DMA2D_Start(hdma2d,
+        HAL_DMA2D_Start_IT(hdma2d,
             (uint32_t)color_p,
             (uint32_t)(fb[0] + area->x1 + area->y1 * w),
             lv_area_get_width(area),
-            lv_area_get_height(area)) == HAL_OK) {
-                HAL_DMA2D_PollForTransfer(hdma2d,10);
-            }
-            lv_disp_flush_ready(dma2d_disp_drv);
-            dma2d_pend = false;
-    }
+            lv_area_get_height(area));
+         
 }
 
 
@@ -118,9 +107,9 @@ void DMA2D_TransferComplete(DMA2D_HandleTypeDef *hdma2d) {
     dma2d_pend = false;
 }
 
-void HAL_LTDC_ReloadEventCallback(LTDC_HandleTypeDef *hltdc) {
-    lv_disp_flush_ready(dma2d_disp_drv);
-}
+// void HAL_LTDC_ReloadEventCallback(LTDC_HandleTypeDef *hltdc) {
+//     lv_disp_flush_ready(dma2d_disp_drv);
+// }
 
 
 static bool config_dma2d(void) {
@@ -165,29 +154,29 @@ static bool config_dma2d(void) {
 
 
 
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(mp_rk043fn48h_init_obj, 0, _init);
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_rk043fn48h_framebuffer_obj, mp_rk043fn48h_framebuffer);
-DEFINE_PTR_OBJ(mp_rk043fn48h_flush);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(_init_obj, 0, _init);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(_framebuffer_obj, framebuffer);
+DEFINE_PTR_OBJ(flush_cb);
 
 
-STATIC const mp_rom_map_elem_t rk043fn48h_globals_table[] = {
+STATIC const mp_rom_map_elem_t _globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_discovery_display) },
-    { MP_ROM_QSTR(MP_QSTR_init), MP_ROM_PTR(&mp_rk043fn48h_init_obj) },
+    { MP_ROM_QSTR(MP_QSTR_init), MP_ROM_PTR(&_init_obj) },
     // { MP_ROM_QSTR(MP_QSTR_deinit), MP_ROM_PTR(&mp_rk043fn48h_deinit_obj) },
-   { MP_ROM_QSTR(MP_QSTR_flush), MP_ROM_PTR(&PTR_OBJ(mp_rk043fn48h_flush))},
+   { MP_ROM_QSTR(MP_QSTR_flush), MP_ROM_PTR(&PTR_OBJ(flush_cb))},
     // { MP_ROM_QSTR(MP_QSTR_ts_read), MP_ROM_PTR(&PTR_OBJ(mp_rk043fn48h_ts_read))},
-   { MP_ROM_QSTR(MP_QSTR_framebuffer), MP_ROM_PTR(&PTR_OBJ(mp_rk043fn48h_framebuffer))}
+   { MP_ROM_QSTR(MP_QSTR_framebuffer), MP_ROM_PTR(&PTR_OBJ(_framebuffer))}
 };
 
 STATIC MP_DEFINE_CONST_DICT(
-    mp_module_rk043fn48h_globals,
-    rk043fn48h_globals_table
+    stm32f429_disp_globals,
+    _globals_table
     );
 
-const mp_obj_module_t mp_module_rk043fn48h = {
+const mp_obj_module_t mp_module_discovery_display = {
     .base = { &mp_type_module },
-    .globals = (mp_obj_dict_t *)&mp_module_rk043fn48h_globals
+    .globals = (mp_obj_dict_t *)&stm32f429_disp_globals
 };
 
 
-MP_REGISTER_MODULE(MP_QSTR_discovery_display, mp_module_rk043fn48h);
+MP_REGISTER_MODULE(MP_QSTR_discovery_display, mp_module_discovery_display);
