@@ -10,6 +10,7 @@
 #include "ports/stm32/i2c.h"
 
 #include "stm32f429i_discovery_lcd.h"
+#include "stm32f429i_discovery_ts.h"
 
 DMA2D_HandleTypeDef *hdma2d = NULL;         // handle to DMA2D, referenced in stm32_it.c
 i2c_t *i2c_ts = NULL;                       // I2C handle for touchscreen
@@ -66,6 +67,7 @@ STATIC mp_obj_t _init(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args
 
     BSP_LCD_Init();
     BSP_LCD_LayerDefaultInit(1,(uint32_t)fb[0]);
+    BSP_TS_Init(240,320);
    
 
     if (!config_dma2d()) {
@@ -82,7 +84,6 @@ STATIC mp_obj_t _init(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args
     return mp_const_none;
 }
 
-//extern void SCB_CleanInvalidateDCache();
 
 STATIC void flush_cb(lv_disp_drv_t *disp_drv, const lv_area_t *area, lv_color_t *color_p) {
    
@@ -90,7 +91,6 @@ STATIC void flush_cb(lv_disp_drv_t *disp_drv, const lv_area_t *area, lv_color_t 
         hdma2d->Init.OutputOffset = w - lv_area_get_width(area);
         dma2d_disp_drv = disp_drv;
         dma2d_pend = true;
-        //SCB_CleanInvalidateDCache();
         HAL_DMA2D_Init(hdma2d);
         HAL_DMA2D_Start_IT(hdma2d,
             (uint32_t)color_p,
@@ -152,11 +152,30 @@ static bool config_dma2d(void) {
 }
 
 
+STATIC bool ts_read(struct _lv_indev_drv_t *indev_drv, lv_indev_data_t *data) {
+    static TS_StateTypeDef ts_state;
+    static lv_coord_t lastX = 0;
+    static lv_coord_t lastY = 0;
+
+    BSP_TS_GetState(&ts_state);
+    if (ts_state.TouchDetected) {
+        data->point.x = lastX = ts_state.X;
+        data->point.y = lastY = ts_state.Y;
+        data->state = LV_INDEV_STATE_PR;
+    } else {
+        data->point.x = lastX;
+        data->point.y = lastY;
+        data->state = LV_INDEV_STATE_REL;
+    }
+
+    return false;
+}
 
 
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(_init_obj, 0, _init);
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(_framebuffer_obj, framebuffer);
 DEFINE_PTR_OBJ(flush_cb);
+DEFINE_PTR_OBJ(ts_read);
 
 
 STATIC const mp_rom_map_elem_t _globals_table[] = {
@@ -164,7 +183,7 @@ STATIC const mp_rom_map_elem_t _globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_init), MP_ROM_PTR(&_init_obj) },
     // { MP_ROM_QSTR(MP_QSTR_deinit), MP_ROM_PTR(&mp_rk043fn48h_deinit_obj) },
    { MP_ROM_QSTR(MP_QSTR_flush), MP_ROM_PTR(&PTR_OBJ(flush_cb))},
-    // { MP_ROM_QSTR(MP_QSTR_ts_read), MP_ROM_PTR(&PTR_OBJ(mp_rk043fn48h_ts_read))},
+   { MP_ROM_QSTR(MP_QSTR_ts_read), MP_ROM_PTR(&PTR_OBJ(ts_read))},
    { MP_ROM_QSTR(MP_QSTR_framebuffer), MP_ROM_PTR(&PTR_OBJ(_framebuffer))}
 };
 
