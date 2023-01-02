@@ -1,10 +1,18 @@
 import lvgl as lv
 from  lv_utils import event_loop
 import discovery_display as d 
+import json
 
 
 class Display:
-   def __init__(self):
+   
+   def read_calibration(self,filename):        
+        with open(filename,"r") as f:
+            cal =  json.load(f)
+            d.ts_calibrate(x1=cal[0],y1=cal[1],x2=cal[2],y2=cal[3])
+
+
+   def __init__(self,calfile="calibration.json"):
         lv.init()
         d.init()
 
@@ -24,6 +32,11 @@ class Display:
         indev_drv.type = lv.INDEV_TYPE.POINTER
         indev_drv.read_cb = d.ts_read;
         indev_drv.register()
+
+        try:
+            self.read_calibration(calfile)
+        except Exception as e:
+            print(e)    
 
         try:
             event_loop()
