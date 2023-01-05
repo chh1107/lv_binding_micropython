@@ -74,6 +74,18 @@ STATIC mp_obj_t ts_calibrate(size_t n_args, const mp_obj_t *pos_args, mp_map_t *
 }    
 
 
+STATIC mp_obj_t get_lcd_width(void)
+{
+    return mp_obj_new_int(LCD_WIDTH);
+}
+
+STATIC mp_obj_t get_lcd_height(void)
+{
+    return mp_obj_new_int(LCD_HEIGHT);
+}
+
+
+
 STATIC mp_obj_t _init(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     enum { ARG_w, ARG_h };
     static const mp_arg_t allowed_args[] = {
@@ -217,6 +229,9 @@ STATIC bool ts_read(struct _lv_indev_drv_t *indev_drv, lv_indev_data_t *data) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(_init_obj, 0, _init);
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(_ts_calibrate_obj, 0, ts_calibrate);
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(_framebuffer_obj, framebuffer);
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(get_lcd_height_obj,get_lcd_height);
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(get_lcd_width_obj,get_lcd_width);
+
 DEFINE_PTR_OBJ(flush_cb);
 DEFINE_PTR_OBJ(ts_read);
 
@@ -225,6 +240,8 @@ STATIC const mp_rom_map_elem_t _globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_discovery_display) },
     { MP_ROM_QSTR(MP_QSTR_init), MP_ROM_PTR(&_init_obj) },
     { MP_ROM_QSTR(MP_QSTR_ts_calibrate), MP_ROM_PTR(&_ts_calibrate_obj) },
+    { MP_ROM_QSTR(MP_QSTR_lcd_width), MP_ROM_PTR(&get_lcd_width_obj) },
+    { MP_ROM_QSTR(MP_QSTR_lcd_height), MP_ROM_PTR(&get_lcd_height_obj) },
     // { MP_ROM_QSTR(MP_QSTR_deinit), MP_ROM_PTR(&mp_rk043fn48h_deinit_obj) },
     { MP_ROM_QSTR(MP_QSTR_flush), MP_ROM_PTR(&PTR_OBJ(flush_cb))},
     { MP_ROM_QSTR(MP_QSTR_ts_read), MP_ROM_PTR(&PTR_OBJ(ts_read))},
@@ -242,4 +259,4 @@ const mp_obj_module_t mp_module_discovery_display = {
 };
 
 
-MP_REGISTER_MODULE(MP_QSTR_discovery_display, mp_module_discovery_display);
+MP_REGISTER_MODULE(MP_QSTR_stm32f429disc_disp, mp_module_discovery_display);
