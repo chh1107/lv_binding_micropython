@@ -12,8 +12,8 @@
 #include "stm32f429i_discovery_lcd.h"
 #include "stm32f429i_discovery_ts.h"
 
-#define LCD_WIDTH 240
-#define LCD_HEIGHT 320
+#define LCD_WIDTH (ILI9341_LCD_PIXEL_WIDTH)
+#define LCD_HEIGHT (ILI9341_LCD_PIXEL_HEIGHT)
 
 DMA2D_HandleTypeDef *hdma2d = NULL;         // handle to DMA2D, referenced in stm32_it.c
 i2c_t *i2c_ts = NULL;                       // I2C handle for touchscreen
@@ -128,6 +128,38 @@ STATIC mp_obj_t _init(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args
 }
 
 
+STATIC mp_obj_t _deinit() {
+    if (hdma2d) {
+        HAL_DMA2D_DeInit(hdma2d);
+        hdma2d = NULL;
+    }
+
+    // if (hltdc) {
+    //     HAL_LTDC_DeInit(hltdc);
+    //     HAL_GPIO_WritePin(LCD_DISP_GPIO_PORT, LCD_DISP_PIN, GPIO_PIN_RESET);
+    //     HAL_GPIO_WritePin(LCD_BL_CTRL_GPIO_PORT, LCD_BL_CTRL_PIN, GPIO_PIN_RESET);
+    //     hltdc = NULL;
+    // }
+
+    if(fb[0]!=NULL){
+    	m_free(MP_STATE_PORT(f429_disco_fb[0]));
+        MP_STATE_PORT(f429_disco_fb[0])=NULL;
+    	fb[0]=NULL;
+    }
+
+    if(fb[1]!=NULL){
+    	m_free(MP_STATE_PORT(f429_disco_fb[1]));
+        MP_STATE_PORT(f429_disco_fb[1])=NULL;
+    	fb[1]=NULL;
+    }
+
+    //BSP_TS_DeInit();
+
+    return mp_const_none;
+}
+
+
+
 STATIC void flush_cb(lv_disp_drv_t *disp_drv, const lv_area_t *area, lv_color_t *color_p) {
    
         hdma2d->Init.Mode = DMA2D_M2M;
@@ -227,10 +259,11 @@ STATIC bool ts_read(struct _lv_indev_drv_t *indev_drv, lv_indev_data_t *data) {
 
 
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(_init_obj, 0, _init);
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(_deinit_obj, _deinit);
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(_ts_calibrate_obj, 0, ts_calibrate);
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(_framebuffer_obj, framebuffer);
-STATIC MP_DEFINE_CONST_FUN_OBJ_0(get_lcd_height_obj,get_lcd_height);
-STATIC MP_DEFINE_CONST_FUN_OBJ_0(get_lcd_width_obj,get_lcd_width);
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(get_lcd_height_obj, get_lcd_height);
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(get_lcd_width_obj, get_lcd_width);
 
 DEFINE_PTR_OBJ(flush_cb);
 DEFINE_PTR_OBJ(ts_read);
@@ -239,10 +272,10 @@ DEFINE_PTR_OBJ(ts_read);
 STATIC const mp_rom_map_elem_t _globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_discovery_display) },
     { MP_ROM_QSTR(MP_QSTR_init), MP_ROM_PTR(&_init_obj) },
+    { MP_ROM_QSTR(MP_QSTR_deinit), MP_ROM_PTR(&_deinit_obj) },
     { MP_ROM_QSTR(MP_QSTR_ts_calibrate), MP_ROM_PTR(&_ts_calibrate_obj) },
     { MP_ROM_QSTR(MP_QSTR_lcd_width), MP_ROM_PTR(&get_lcd_width_obj) },
     { MP_ROM_QSTR(MP_QSTR_lcd_height), MP_ROM_PTR(&get_lcd_height_obj) },
-    // { MP_ROM_QSTR(MP_QSTR_deinit), MP_ROM_PTR(&mp_rk043fn48h_deinit_obj) },
     { MP_ROM_QSTR(MP_QSTR_flush), MP_ROM_PTR(&PTR_OBJ(flush_cb))},
     { MP_ROM_QSTR(MP_QSTR_ts_read), MP_ROM_PTR(&PTR_OBJ(ts_read))},
     { MP_ROM_QSTR(MP_QSTR_framebuffer), MP_ROM_PTR(&PTR_OBJ(_framebuffer))}
