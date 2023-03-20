@@ -3,7 +3,7 @@ $(BOARD)_DIR := $(LVGL_BINDING_DIR)/driver/stm32/$(BOARD)
 
 # LIB_SRC_C += $(shell find $($(BOARD)_DIR)/*.c)
 # Add your module's source files to LIB_SRC_C
-LIB_SRC_C += $($(BOARD)_DIR)/displaymod.c
+LIB_SRC_C += $($(BOARD)_DIR)/modstm32f429disc_disp.c
 LIB_SRC_C += $($(BOARD)_DIR)/stm32f429i_discovery_lcd.c
 LIB_SRC_C += $($(BOARD)_DIR)/stm32f429i_discovery_ts.c
 LIB_SRC_C += $($(BOARD)_DIR)/stm32f429i_discovery.c
