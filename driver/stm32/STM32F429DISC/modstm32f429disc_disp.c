@@ -49,15 +49,15 @@ STATIC mp_obj_t framebuffer(mp_obj_t n_obj) {
 
 STATIC void set_calibration(int32_t x1,int32_t y1,int32_t x2,int32_t y2) {
 
-     A1 = (1000 * ( w))/ ( x2 - x1); 
-     B1 =  - A1 * x1; 
-      
-     A2 = (1000 * (h))/ ( y2 - y1); 
-     B2 = - A2 * y1; 
+     A1 = (1000 * ( w))/ ( x2 - x1);
+     B1 =  - A1 * x1;
+
+     A2 = (1000 * (h))/ ( y2 - y1);
+     B2 = - A2 * y1;
 }
 
 STATIC mp_obj_t ts_calibrate(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-   
+
     static const mp_arg_t allowed_args[] = {
         { MP_QSTR_x1, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = 0} },
         { MP_QSTR_y1, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = 0} },
@@ -71,7 +71,7 @@ STATIC mp_obj_t ts_calibrate(size_t n_args, const mp_obj_t *pos_args, mp_map_t *
     set_calibration(args[0].u_int, args[1].u_int, args[2].u_int, args[3].u_int);
 
     return mp_const_none;
-}    
+}
 
 
 STATIC mp_obj_t get_lcd_width(void)
@@ -111,7 +111,7 @@ STATIC mp_obj_t _init(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args
     BSP_LCD_LayerDefaultInit(1,(uint32_t)fb[0]);
     BSP_TS_Init(w,h);
     set_calibration(0,0,w,h);
-   
+
 
     if (!config_dma2d()) {
          mp_obj_new_exception_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("DMA2D init error"));
@@ -123,7 +123,7 @@ STATIC mp_obj_t _init(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args
     // if (BSP_TS_Init(w, h) != TS_OK) {
     //     mp_obj_new_exception_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("Touchscreen init error"));
     // }
-  
+
     return mp_const_none;
 }
 
@@ -161,7 +161,7 @@ STATIC mp_obj_t _deinit() {
 
 
 STATIC void flush_cb(lv_disp_drv_t *disp_drv, const lv_area_t *area, lv_color_t *color_p) {
-   
+
         hdma2d->Init.Mode = DMA2D_M2M;
         hdma2d->Init.OutputOffset = w - lv_area_get_width(area);
         dma2d_disp_drv = disp_drv;
@@ -172,7 +172,7 @@ STATIC void flush_cb(lv_disp_drv_t *disp_drv, const lv_area_t *area, lv_color_t 
             (uint32_t)(fb[0] + area->x1 + area->y1 * w),
             lv_area_get_width(area),
             lv_area_get_height(area));
-         
+
 }
 
 
