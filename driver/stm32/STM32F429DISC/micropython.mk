@@ -4,7 +4,7 @@ $(BOARD)_DIR := $(LVGL_BINDING_DIR)/driver/stm32/$(BOARD)
 # LIB_SRC_C += $(shell find $($(BOARD)_DIR)/*.c)
 # Add your module's source files to LIB_SRC_C
 LIB_SRC_C += $($(BOARD)_DIR)/modstm32f429disc_disp.c
-LIB_SRC_C += $($(BOARD)_DIR)/modgyro.c
+LIB_SRC_C += $($(BOARD)_DIR)/modstm32f429disc_gyro.c
 LIB_SRC_C += $($(BOARD)_DIR)/stm32f429i_discovery_lcd.c
 LIB_SRC_C += $($(BOARD)_DIR)/stm32f429i_discovery_ts.c
 LIB_SRC_C += $($(BOARD)_DIR)/stm32f429i_discovery.c
@@ -18,7 +18,7 @@ LIB_SRC_C += $($(BOARD)_DIR)/../../../STM32CubeF4/Drivers/BSP/Components/l3gd20/
 LIB_SRC_C += $($(BOARD)_DIR)/../../../STM32CubeF4/Drivers/BSP/Components/i3g4250d/i3g4250d.c
 
 # Add custom compiler options to CFLAGS
-## Enable proper hardware revision
+## Enable proper hardware revision (see stm32f429i_discovery.h)
 CFLAGS += -DUSE_STM32F429I_DISCOVERY_REVD
 ## Add includes to search for header files
 CFLAGS += -I$($(BOARD)_DIR)/../../../STM32CubeF4/Drivers/BSP/STM32F429I-Discovery
