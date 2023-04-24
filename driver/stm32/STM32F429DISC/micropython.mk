@@ -10,7 +10,6 @@ LIB_SRC_C += $($(BOARD)_DIR)/stm32f429i_discovery_ts.c
 LIB_SRC_C += $($(BOARD)_DIR)/stm32f429i_discovery.c
 # You must also add helpers and library code that isn't MicroPython-specific.
 LIB_SRC_C += $($(BOARD)_DIR)/../../../STM32CubeF4/Drivers/BSP/STM32F429I-Discovery/stm32f429i_discovery_io.c
-LIB_SRC_C += $($(BOARD)_DIR)/../../../STM32CubeF4/Drivers/BSP/STM32F429I-Discovery/stm32f429i_discovery_sdram.c
 LIB_SRC_C += $($(BOARD)_DIR)/../../../STM32CubeF4/Drivers/BSP/STM32F429I-Discovery/stm32f429i_discovery_gyroscope.c
 LIB_SRC_C += $($(BOARD)_DIR)/../../../STM32CubeF4/Drivers/BSP/Components/stmpe811/stmpe811.c
 LIB_SRC_C += $($(BOARD)_DIR)/../../../STM32CubeF4/Drivers/BSP/Components/ili9341/ili9341.c
