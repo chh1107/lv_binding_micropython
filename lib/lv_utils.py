@@ -50,7 +50,7 @@ default_timer_id = 0
 if usys.platform == 'pyboard':
     # stm32 only supports SW timer -1
     default_timer_id = -1
-    
+
 if usys.platform == 'rp2':
     # rp2 only supports SW timer -1
     default_timer_id = -1
@@ -96,6 +96,9 @@ class event_loop():
             self.max_scheduled = max_scheduled
             self.scheduled = 0
 
+        # Check if tick_inc is required (see LV_TICK_CUSTOM in lv_conf.h)
+        self.enable_tick_inc = hasattr(lv, 'tick_inc')
+
     def deinit(self):
         if self.asynchronous:
             self.refresh_task.cancel()
@@ -130,7 +133,8 @@ class event_loop():
     def timer_cb(self, t):
         # Can be called in Interrupt context
         # Use task_handler_ref since passing self.task_handler would cause allocation.
-        lv.tick_inc(self.delay)
+        if self.enable_tick_inc:
+            lv.tick_inc(self.delay)
         if self.scheduled < self.max_scheduled:
             try:
                 micropython.schedule(self.task_handler_ref, 0)
@@ -152,9 +156,10 @@ class event_loop():
     async def async_timer(self):
         while True:
             await uasyncio.sleep_ms(self.delay)
-            lv.tick_inc(self.delay)
+            if self.enable_tick_inc:
+                lv.tick_inc(self.delay)
             self.refresh_event.set()
-            
+
 
     def default_exception_sink(self, e):
         usys.print_exception(e)
